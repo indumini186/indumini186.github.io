@@ -1,115 +1,126 @@
-/* ===================================================================
-   Indumini Adarshya - Portfolio Interactive Scripts
-   =================================================================== */
+/**
+ * Indumini Adarshya - Professional Developer Portfolio Interactive Logic
+ * Inspired by modern tech portfolio design system with dark/light themes,
+ * project filters, dynamic architectural modals, clipboard copies, and mail handlers.
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  initTypingEffect();
-  initProjectFilters();
-  initModals();
-  initCopyButtons();
-  initMobileNav();
-  initScrollSpy();
-  initContactForm();
-});
+  // ------------------------------------------------------------------------
+  // 1. Color Theme Toggle (Dark / Light) with LocalStorage
+  // ------------------------------------------------------------------------
+  const themeToggleBtn = document.getElementById('theme-toggle');
+  const htmlRoot = document.documentElement;
 
-/* -------------------------------------------------------------------
-   1. Theme Management (Dark / Light)
-------------------------------------------------------------------- */
-function initTheme() {
-  const themeToggle = document.getElementById('theme-toggle');
-  const themeIcon = document.getElementById('theme-icon');
-  
-  // Check saved preference or default to dark
-  const savedTheme = localStorage.getItem('portfolio-theme') || 'dark';
-  applyTheme(savedTheme);
+  // Retrieve saved theme or system preference
+  const savedTheme = localStorage.getItem('portfolio-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(newTheme);
-      localStorage.setItem('portfolio-theme', newTheme);
+  if (savedTheme) {
+    htmlRoot.setAttribute('data-theme', savedTheme);
+  } else if (!prefersDark) {
+    htmlRoot.setAttribute('data-theme', 'light');
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = htmlRoot.getAttribute('data-theme');
+      const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+      htmlRoot.setAttribute('data-theme', nextTheme);
+      localStorage.setItem('portfolio-theme', nextTheme);
+      showToast(`Switched to ${nextTheme === 'dark' ? 'Dark' : 'Light'} Mode`);
     });
   }
 
-  function applyTheme(theme) {
-    if (theme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-      if (themeIcon) {
-        themeIcon.classList.remove('fa-moon');
-        themeIcon.classList.add('fa-sun');
+  // ------------------------------------------------------------------------
+  // 2. Mobile Navigation Toggle
+  // ------------------------------------------------------------------------
+  const mobileToggleBtn = document.getElementById('mobile-toggle');
+  const navMenu = document.getElementById('nav-menu');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  if (mobileToggleBtn && navMenu) {
+    mobileToggleBtn.addEventListener('click', () => {
+      const isOpen = navMenu.classList.toggle('mobile-open');
+      mobileToggleBtn.setAttribute('aria-expanded', isOpen);
+    });
+
+    // Close menu when a link is clicked
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        navMenu.classList.remove('mobile-open');
+        mobileToggleBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+    // Close menu when tapping outside
+    document.addEventListener('click', (e) => {
+      if (navMenu.classList.contains('mobile-open') && !navMenu.contains(e.target) && !mobileToggleBtn.contains(e.target)) {
+        navMenu.classList.remove('mobile-open');
+        mobileToggleBtn.setAttribute('aria-expanded', 'false');
       }
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      if (themeIcon) {
-        themeIcon.classList.remove('fa-sun');
-        themeIcon.classList.add('fa-moon');
-      }
-    }
-  }
-}
-
-/* -------------------------------------------------------------------
-   2. Typing Effect in Hero
-------------------------------------------------------------------- */
-function initTypingEffect() {
-  const typingElement = document.getElementById('typing-text');
-  if (!typingElement) return;
-
-  const roles = [
-    'Full-Stack Developer (Java & Node.js)',
-    'Agentic AI Engineer (LangGraph & RAG)',
-    'Microservices & Cloud Architect',
-    'Cybersecurity Enthusiast (70+ THM Labs)',
-    'BSc (Hons) IT Undergraduate'
-  ];
-
-  let roleIndex = 0;
-  let charIndex = 0;
-  let isDeleting = false;
-  let typingSpeed = 90;
-
-  function type() {
-    const currentRole = roles[roleIndex];
-
-    if (isDeleting) {
-      typingElement.textContent = currentRole.substring(0, charIndex - 1);
-      charIndex--;
-      typingSpeed = 45;
-    } else {
-      typingElement.textContent = currentRole.substring(0, charIndex + 1);
-      charIndex++;
-      typingSpeed = 90;
-    }
-
-    if (!isDeleting && charIndex === currentRole.length) {
-      // Pause at full word
-      typingSpeed = 2000;
-      isDeleting = true;
-    } else if (isDeleting && charIndex === 0) {
-      isDeleting = false;
-      roleIndex = (roleIndex + 1) % roles.length;
-      typingSpeed = 450;
-    }
-
-    setTimeout(type, typingSpeed);
+    });
   }
 
-  setTimeout(type, 500);
-}
+  // ------------------------------------------------------------------------
+  // 3. Navbar Scrollspy & Scroll Shadow
+  // ------------------------------------------------------------------------
+  const navbar = document.getElementById('navbar');
+  const sections = document.querySelectorAll('section[id]');
+  const backToTopBtn = document.getElementById('back-to-top');
 
-/* -------------------------------------------------------------------
-   3. Project Category Filter
-------------------------------------------------------------------- */
-function initProjectFilters() {
-  const filterBtns = document.querySelectorAll('.filter-btn');
+  window.addEventListener('scroll', () => {
+    const scrollY = window.pageYOffset;
+
+    // Header shadow on scroll
+    if (navbar) {
+      if (scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    }
+
+    // Back to top button visibility
+    if (backToTopBtn) {
+      if (scrollY > 400) {
+        backToTopBtn.classList.add('visible');
+      } else {
+        backToTopBtn.classList.remove('visible');
+      }
+    }
+
+    // Active Section ScrollSpy
+    sections.forEach(section => {
+      const sectionHeight = section.offsetHeight;
+      const sectionTop = section.offsetTop - 120;
+      const sectionId = section.getAttribute('id');
+      const targetLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+
+      if (targetLink) {
+        if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+          targetLink.classList.add('active');
+        } else {
+          targetLink.classList.remove('active');
+        }
+      }
+    });
+  });
+
+  if (backToTopBtn) {
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // 4. Interactive Project Filtering
+  // ------------------------------------------------------------------------
+  const filterButtons = document.querySelectorAll('.filter-btn');
   const projectCards = document.querySelectorAll('.project-card');
 
-  filterBtns.forEach(btn => {
+  filterButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      // Remove active from all
-      filterBtns.forEach(b => b.classList.remove('active'));
+      filterButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       const filterValue = btn.getAttribute('data-filter');
@@ -132,296 +143,251 @@ function initProjectFilters() {
       });
     });
   });
-}
 
-/* -------------------------------------------------------------------
-   4. Modals (Project Detail & Interview Cheat Sheet)
-------------------------------------------------------------------- */
-const projectDetailsData = {
-  'ai-agent': {
-    title: 'AI Interview Preparation Assistant (Agentic AI)',
-    badge: 'LangGraph Multi-Agent Architecture',
-    tagline: 'Autonomous 4-agent interview coaching system with RAG and dynamic scoring',
-    liveUrl: 'https://interviewagent-g93odkwv5wvnvohdfupdyz.streamlit.app/',
-    repoUrl: 'https://github.com/indumini186',
-    architecture: `
-      <ul>
-        <li><strong>LangGraph State Orchestration:</strong> Orchestrates state flow across 4 specialized worker agents (<code>resume_analyzer</code> &rarr; <code>question_generator</code> &rarr; <code>answer_evaluator</code> &rarr; <code>learning_coach</code>).</li>
-        <li><strong>Structured JSON Decomposition:</strong> Parses unstructured PDF/DOCX resumes into structured candidate profiles and maps skill gaps.</li>
-        <li><strong>Vector RAG Tool-Use:</strong> Employs <code>FAISS</code> and <code>ChromaDB</code> vector databases to retrieve real-time domain-specific questions, STAR method frameworks, and system design patterns.</li>
-        <li><strong>Self-Critique & Reflection:</strong> Evaluates answers across 7 dimensions (STAR method compliance, technical depth, clarity, action verbs, etc.) and generates ideal model answers.</li>
-        <li><strong>Cloud Deployment:</strong> Fully deployed on Streamlit Cloud with Groq & OpenRouter ultra-low latency LLM inference.</li>
-      </ul>
-    `,
-    techList: ['Python 3.11', 'LangGraph', 'Groq API', 'OpenRouter', 'FAISS', 'ChromaDB', 'Streamlit', 'RAG']
-  },
-  'multi-converter': {
-    title: 'Multi-Converter Microservices Monorepo',
-    badge: 'Enterprise Microservices & BFF Pattern',
-    tagline: 'Distributed high-precision Currency and Temperature conversion suite',
-    repoUrl: 'https://github.com/indumini186/Multi-Converter',
-    architecture: `
-      <ul>
-        <li><strong>Backend-for-Frontend (BFF) Gateway:</strong> Built with Node.js and Express to unify API contracts, mask internal service topologies, and handle CORS.</li>
-        <li><strong>Credential Security:</strong> Implements zero-trust API Key injection server-side (<code>X-API-Key</code>), guaranteeing internal microservices are isolated from public network traffic.</li>
-        <li><strong>Distributed Microservices:</strong> Core business logic distributed across independent Java 17 + Spring Boot services for Temperature and Currency calculations.</li>
-        <li><strong>Audit Logging & Safety Alerts:</strong> Full MongoDB integration storing conversion histories, timestamped audits, and automated safety warnings for extreme temperature thresholds.</li>
-        <li><strong>DevOps Containerization:</strong> Standardized multi-container deployment using Docker and Docker Compose for instant reproducible spins.</li>
-      </ul>
-    `,
-    techList: ['Java 17', 'Spring Boot 3.5', 'Node.js', 'Express.js', 'MongoDB', 'Docker', 'Docker Compose', 'REST APIs', 'Postman']
-  },
-  'hiring-website': {
-    title: 'Modern Hiring Website – Job Portal',
-    badge: 'Full-Stack Web & Automated CI/CD',
-    tagline: 'End-to-end job portal with automated ATS candidate scoring and CI/CD',
-    liveUrl: 'https://modern-hiring-website.vercel.app/',
-    repoUrl: 'https://github.com/Bawan2001/Modern-Hiring-Website',
-    architecture: `
-      <ul>
-        <li><strong>Automated ATS Resume Scoring:</strong> Built-in algorithmic ATS evaluator that parses and matches applicant skills against job requirements to rank candidates automatically.</li>
-        <li><strong>Role-Based Access Control (RBAC):</strong> Granular permissions separating job seeker profiles from corporate recruiter and employer dashboards.</li>
-        <li><strong>Backend & Persistence:</strong> Python Flask REST backend with SQLAlchemy ORM, SQLite/PostgreSQL schemas, and Jinja2 templating.</li>
-        <li><strong>CI/CD Deployment:</strong> Fully automated continuous integration and deployment pipeline powered by GitHub Actions, containerized with Docker, and deployed on Vercel.</li>
-      </ul>
-    `,
-    techList: ['Python', 'Flask', 'SQLAlchemy', 'Docker', 'GitHub Actions (CI/CD)', 'Vercel', 'JavaScript', 'HTML5/CSS3']
-  },
-  'hospital-management': {
-    title: 'Distributed Hospital Appointment Management System',
-    badge: 'Healthcare Microservices & Spring Cloud',
-    tagline: 'Scalable hospital microservices backend for doctor scheduling and patient bookings',
-    repoUrl: 'https://github.com/Bawan2001/Hostpital-Appoinment-Management-System',
-    architecture: `
-      <ul>
-        <li><strong>Microservices Architecture:</strong> Decoupled services handling doctor profile management, specialty-based scheduling, and patient appointment queues.</li>
-        <li><strong>Inter-Service Communication:</strong> Spring Cloud integration facilitating resilient inter-microservice discovery and synchronous/asynchronous data exchanges.</li>
-        <li><strong>NoSQL Data Persistence:</strong> High-throughput MongoDB schemas optimized for rapid doctor availability lookups and booking histories.</li>
-        <li><strong>Container Infrastructure:</strong> Containerized using Docker for microservice isolation and horizontal scaling.</li>
-      </ul>
-    `,
-    techList: ['Java 21', 'Spring Boot', 'Spring Cloud', 'MongoDB', 'Docker', 'REST APIs']
-  }
-};
+  // ------------------------------------------------------------------------
+  // 5. Toast Notification System
+  // ------------------------------------------------------------------------
+  function showToast(message, duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
 
-function initModals() {
-  // General Modal Containers
-  const projectModal = document.getElementById('project-detail-modal');
-  const cheatModal = document.getElementById('cheat-sheet-modal');
-  const closeBtns = document.querySelectorAll('.modal-close-btn');
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.innerHTML = `<i class="fa-solid fa-circle-check text-accent"></i> <span>${message}</span>`;
+    container.appendChild(toast);
 
-  // Trigger buttons
-  const cheatTrigger = document.getElementById('open-cheat-sheet-btn');
-  const detailTriggers = document.querySelectorAll('.view-project-details');
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
 
-  // Open Cheat Sheet
-  if (cheatTrigger && cheatModal) {
-    cheatTrigger.addEventListener('click', (e) => {
-      e.preventDefault();
-      cheatModal.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    });
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, duration);
   }
 
-  // Open Project Details
-  detailTriggers.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const projectId = btn.getAttribute('data-project');
-      const data = projectDetailsData[projectId];
-      if (!data) return;
+  // ------------------------------------------------------------------------
+  // 6. 1-Click Copy to Clipboard Handler
+  // ------------------------------------------------------------------------
+  const copyButtons = document.querySelectorAll('.copy-btn');
 
-      document.getElementById('modal-project-title').textContent = data.title;
-      document.getElementById('modal-project-badge').textContent = data.badge;
-      document.getElementById('modal-project-tagline').textContent = data.tagline;
-      document.getElementById('modal-project-architecture').innerHTML = data.architecture;
-
-      // Tech Stack Chips
-      const techContainer = document.getElementById('modal-project-tech');
-      techContainer.innerHTML = '';
-      data.techList.forEach(tech => {
-        const span = document.createElement('span');
-        span.className = 'tech-tag';
-        span.textContent = tech;
-        techContainer.appendChild(span);
-      });
-
-      // Links
-      const liveBtn = document.getElementById('modal-project-live');
-      if (data.liveUrl) {
-        liveBtn.href = data.liveUrl;
-        liveBtn.style.display = 'inline-flex';
-      } else {
-        liveBtn.style.display = 'none';
-      }
-
-      const repoBtn = document.getElementById('modal-project-repo');
-      if (data.repoUrl) {
-        repoBtn.href = data.repoUrl;
-        repoBtn.style.display = 'inline-flex';
-      } else {
-        repoBtn.style.display = 'none';
-      }
-
-      projectModal.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    });
-  });
-
-  // Close modals
-  closeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      closeAllModals();
-    });
-  });
-
-  // Close on backdrop click
-  window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal-overlay')) {
-      closeAllModals();
-    }
-  });
-
-  // Close on Escape key
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeAllModals();
-    }
-  });
-
-  function closeAllModals() {
-    if (projectModal) projectModal.classList.remove('active');
-    if (cheatModal) cheatModal.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-}
-
-/* -------------------------------------------------------------------
-   5. Copy to Clipboard & Toast Notifications
-------------------------------------------------------------------- */
-function initCopyButtons() {
-  const copyBtns = document.querySelectorAll('.copy-trigger');
-
-  copyBtns.forEach(btn => {
+  copyButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const textToCopy = btn.getAttribute('data-copy');
       if (!textToCopy) return;
 
       navigator.clipboard.writeText(textToCopy).then(() => {
         showToast(`Copied to clipboard: ${textToCopy}`);
-      }).catch(() => {
+      }).catch(err => {
+        console.error('Clipboard copy failed:', err);
         showToast('Copied to clipboard!');
       });
     });
   });
-}
 
-function showToast(message) {
-  let toastContainer = document.getElementById('toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.className = 'toast-container';
-    document.body.appendChild(toastContainer);
+  // ------------------------------------------------------------------------
+  // 7. Interactive Project Architecture Modal System
+  // ------------------------------------------------------------------------
+  const projectDetails = {
+    'ai-interview': {
+      title: 'AI Interview Preparation Assistant (Agentic AI)',
+      category: 'Agentic AI • RAG • Personal Project',
+      description: 'An intelligent, autonomous 4-agent interview coaching system with resume analysis, role-tailored question generation, 7-metric answer evaluation, and personalized study roadmaps.',
+      architecture: [
+        'LangGraph State Orchestration: Coordinates state flow across 4 worker agents (resume_analyzer -> question_generator -> answer_evaluator -> learning_coach) with shared StateGraph memory.',
+        'Dynamic Vector RAG Tool-Use: Employs FAISS and ChromaDB vector databases to retrieve real-time domain-specific questions, STAR method frameworks, and system design patterns.',
+        'Reflection & Self-Critique Engine: Evaluates candidate answers across 7 scoring dimensions (STAR compliance, technical depth, clarity, action verbs, etc.) and generates ideal model answers.',
+        'Low-Latency LLM Inference: Integrated with Groq (Llama-3 70B) and OpenRouter models, deployed live on Streamlit Cloud.'
+      ],
+      techStack: ['Python 3.11', 'LangGraph', 'Groq API', 'OpenRouter', 'FAISS', 'ChromaDB', 'Streamlit', 'RAG'],
+      repoLink: 'https://github.com/indumini186',
+      liveLink: 'https://interviewagent-g93odkwv5wvnvohdfupdyz.streamlit.app/'
+    },
+    'multi-converter': {
+      title: 'Multi-Converter Microservices Monorepo',
+      category: 'Distributed Systems • Spring Boot • BFF Pattern',
+      description: 'A production-grade, distributed microservices suite for Currency (USD/LKR) and Temperature (°C/°F) conversions with decoupled BFF gateway and MongoDB audit logging.',
+      architecture: [
+        'Backend-For-Frontend (BFF) Gateway: Node.js Express BFF handles client routing, masks internal service ports, and injects confidential credentials (X-API-Key) server-to-server.',
+        'Core Spring Boot Microservices: Independent Java 17 Spring Boot microservices for high-precision Currency and Temperature computation with strict input validation.',
+        'Automated Safety Alerts & Auditing: MongoDB integration for persistent conversion logging, timestamped audit trials, and automated alerts for extreme temperatures.',
+        'DevOps Containerization: Full Docker and Docker Compose containerization for rapid local development and scalable multi-container orchestration.'
+      ],
+      techStack: ['Java 17', 'Spring Boot 3.5', 'Node.js', 'Express.js', 'MongoDB', 'Docker', 'Docker Compose', 'REST APIs', 'Postman'],
+      repoLink: 'https://github.com/indumini186/Multi-Converter',
+      liveLink: ''
+    },
+    'modern-hiring': {
+      title: 'Modern Hiring Website – Job Portal with CI/CD',
+      category: 'Full-Stack Web • DevOps • Group Project',
+      description: 'An end-to-end recruitment platform with role-based access control, job posting workflows, an algorithmic ATS resume scoring engine, and automated CI/CD.',
+      architecture: [
+        'Role-Based Access Control (RBAC): Secure authentication separating Job Seeker dashboards from Employer / Recruiter management consoles.',
+        'Algorithmic ATS Resume Scoring: Parses and computes keyword match percentages between candidate profiles and job requirements for automated applicant ranking.',
+        'Backend & Persistence: Python Flask RESTful backend with SQLAlchemy ORM and SQLite schemas with optimized query performance.',
+        'Automated CI/CD Pipeline: GitHub Actions workflow with Docker builds and automated deployments directly to Vercel production hosting.'
+      ],
+      techStack: ['Python', 'Flask', 'SQLAlchemy', 'SQLite', 'Docker', 'GitHub Actions (CI/CD)', 'Vercel', 'JavaScript', 'HTML5/CSS3'],
+      repoLink: 'https://github.com/Bawan2001/Modern-Hiring-Website',
+      liveLink: 'https://modern-hiring-website.vercel.app/'
+    },
+    'hospital-management': {
+      title: 'Distributed Hospital Appointment Management System',
+      category: 'Microservices • Healthcare • Spring Cloud',
+      description: 'A scalable microservices platform designed for modern hospital management, doctor scheduling, and patient appointment booking.',
+      architecture: [
+        'Decoupled Microservices: Independent services managing doctor profiles, specialty-based searches, and real-time appointment availability slots.',
+        'Spring Cloud Inter-Service Communication: Service registry and resilient discovery ensuring high availability and fault isolation across services.',
+        'NoSQL Persistence: MongoDB integration storing high-throughput appointment records, doctor schedules, and patient history.',
+        'Container Orchestration: Containerized via Docker for seamless multi-environment portability and scalability.'
+      ],
+      techStack: ['Java 21', 'Spring Boot', 'Spring Cloud', 'MongoDB', 'Docker', 'REST APIs'],
+      repoLink: 'https://github.com/Bawan2001/Hostpital-Appoinment-Management-System',
+      liveLink: ''
+    }
+  };
+
+  const projectModal = document.getElementById('project-modal');
+  const modalContent = document.getElementById('modal-content');
+  const modalCloseBtn = document.getElementById('modal-close');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const openDetailButtons = document.querySelectorAll('.open-details-btn');
+
+  function openModal(projectId) {
+    const details = projectDetails[projectId];
+    if (!details || !modalContent) return;
+
+    modalContent.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); letter-spacing: 0.5px;">
+          ${details.category}
+        </span>
+        <h3 style="font-size: 1.6rem; font-weight: 800; margin: 6px 0 12px; color: var(--text-primary); line-height: 1.3;">
+          ${details.title}
+        </h3>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
+          ${details.description}
+        </p>
+      </div>
+
+      <h4 style="font-size: 1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 12px;">
+        <i class="fa-solid fa-layer-group"></i> Architecture &amp; Engineering Highlights
+      </h4>
+      <ul style="padding-left: 18px; margin-bottom: 24px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65; list-style: disc;">
+        ${details.architecture.map(item => `<li style="margin-bottom: 10px;">${item}</li>`).join('')}
+      </ul>
+
+      <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+        Technologies Used
+      </h4>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 28px;">
+        ${details.techStack.map(tag => `<span style="font-size: 0.76rem; font-family: var(--font-mono); background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 4px 10px; border-radius: 4px; color: var(--text-secondary);">${tag}</span>`).join('')}
+      </div>
+
+      <div style="display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap;">
+        ${details.liveLink ? `
+          <a href="${details.liveLink}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Live Demo
+          </a>
+        ` : ''}
+        <a href="${details.repoLink}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+          <i class="fa-brands fa-github"></i> View GitHub Repository
+        </a>
+      </div>
+    `;
+
+    projectModal.classList.add('active');
+    projectModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
   }
 
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message}</span>`;
-  toastContainer.appendChild(toast);
+  function closeModal() {
+    projectModal.classList.remove('active');
+    projectModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = 'auto';
+  }
 
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-    setTimeout(() => {
-      toast.remove();
-    }, 300);
-  }, 2800);
-}
-
-/* -------------------------------------------------------------------
-   6. Mobile Navigation
-------------------------------------------------------------------- */
-function initMobileNav() {
-  const menuBtn = document.getElementById('mobile-menu-btn');
-  const navLinks = document.getElementById('nav-links');
-
-  if (menuBtn && navLinks) {
-    menuBtn.addEventListener('click', () => {
-      navLinks.classList.toggle('mobile-active');
-      const icon = menuBtn.querySelector('i');
-      if (icon) {
-        if (navLinks.classList.contains('mobile-active')) {
-          icon.classList.remove('fa-bars');
-          icon.classList.add('fa-xmark');
-        } else {
-          icon.classList.remove('fa-xmark');
-          icon.classList.add('fa-bars');
-        }
-      }
+  openDetailButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const projectId = btn.getAttribute('data-project-id');
+      openModal(projectId);
     });
+  });
 
-    // Close menu when clicking link
-    navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        navLinks.classList.remove('mobile-active');
-        const icon = menuBtn.querySelector('i');
-        if (icon) {
-          icon.classList.remove('fa-xmark');
-          icon.classList.add('fa-bars');
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+  if (modalOverlay) modalOverlay.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && projectModal && projectModal.classList.contains('active')) {
+      closeModal();
+    }
+  });
+
+  // ------------------------------------------------------------------------
+  // 8. Contact Form Submission Handler
+  // ------------------------------------------------------------------------
+  const contactForm = document.getElementById('contact-form');
+  const formFeedback = document.getElementById('form-feedback');
+  const submitBtn = document.getElementById('submit-btn');
+
+  if (contactForm) {
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('form-name').value.trim();
+      const email = document.getElementById('form-email').value.trim();
+      const subject = document.getElementById('form-subject').value.trim();
+      const message = document.getElementById('form-message').value.trim();
+
+      if (!name || !email || !message) {
+        if (formFeedback) {
+          formFeedback.className = 'form-feedback error';
+          formFeedback.textContent = 'Please fill out all required fields (*).';
+          formFeedback.classList.remove('hidden');
         }
-      });
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing Email...';
+      }
+
+      const mailtoUri = `mailto:induminiadarsha95@gmail.com?subject=${encodeURIComponent(subject || 'IT Internship Opportunity')}&body=${encodeURIComponent(`Hi Indumini,\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
+
+      setTimeout(() => {
+        if (formFeedback) {
+          formFeedback.className = 'form-feedback success';
+          formFeedback.innerHTML = `
+            <strong><i class="fa-solid fa-check"></i> Thank you, ${name}!</strong><br>
+            Your inquiry has been prepared. If your email client does not open automatically, 
+            <a href="${mailtoUri}" style="text-decoration: underline; color: inherit; font-weight: bold;">click here to launch your mail client</a> 
+            or reach me directly at <strong>induminiadarsha95@gmail.com</strong>.
+          `;
+          formFeedback.classList.remove('hidden');
+        }
+
+        window.location.href = mailtoUri;
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Message';
+        }
+
+        contactForm.reset();
+        showToast('Message inquiry prepared! Opening mail client...');
+      }, 600);
     });
   }
-}
 
-/* -------------------------------------------------------------------
-   7. Scroll Spy for Active Navigation
-------------------------------------------------------------------- */
-function initScrollSpy() {
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.nav-link');
-
-  window.addEventListener('scroll', () => {
-    let scrollY = window.pageYOffset;
-
-    sections.forEach(current => {
-      const sectionHeight = current.offsetHeight;
-      const sectionTop = current.offsetTop - 100;
-      const sectionId = current.getAttribute('id');
-
-      if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-        navLinks.forEach(link => {
-          link.classList.remove('active');
-          if (link.getAttribute('href') === `#${sectionId}`) {
-            link.classList.add('active');
-          }
-        });
-      }
-    });
-  });
-}
-
-/* -------------------------------------------------------------------
-   8. Contact Form Handling
-------------------------------------------------------------------- */
-function initContactForm() {
-  const form = document.getElementById('contact-form');
-  if (!form) return;
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('contact-name').value;
-    const email = document.getElementById('contact-email').value;
-    const message = document.getElementById('contact-message').value;
-
-    const subject = encodeURIComponent(`Portfolio Inquiry from ${name}`);
-    const body = encodeURIComponent(`Hi Indumini,\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-
-    // Direct mailto trigger
-    window.location.href = `mailto:induminiadarsha95@gmail.com?subject=${subject}&body=${body}`;
-
-    showToast('Redirecting to your email client to send message...');
-    form.reset();
-  });
-}
+  // Set current copyright year
+  const currentYearSpan = document.getElementById('current-year');
+  if (currentYearSpan) {
+    currentYearSpan.textContent = new Date().getFullYear();
+  }
+});
